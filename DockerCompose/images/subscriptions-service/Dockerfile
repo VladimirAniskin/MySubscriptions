@@ -1,0 +1,9 @@
+FROM openjdk:17-jdk-slim
+
+WORKDIR /app
+
+COPY subscriptionsService-0.0.1-SNAPSHOT.jar /app/subscriptionsService.jar
+
+EXPOSE 8083
+
+ENTRYPOINT ["java", "-jar", "subscriptionsService.jar"]
