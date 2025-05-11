@@ -1,0 +1,77 @@
+version: "3.9"
+services:
+
+  gateway:
+    build:
+      context: ./images/gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    depends_on:
+      - subscriptions-service
+      - user-service
+    networks:
+      - my_subscriptions-network
+
+  user-service:
+    build:
+      context: ./images/user-service
+      dockerfile: Dockerfile
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/my_subscriptions
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=secretPassword12345
+      - SPRING_FLYWAY_URL=jdbc:postgresql://db:5432/my_subscriptions
+      - SPRING_FLYWAY_PASSWORD=secretPassword12345
+    depends_on:
+      - db
+    networks:
+      - my_subscriptions-network
+
+  order-service:
+    build:
+      context: ./images/subscriptions-service
+      dockerfile: Dockerfile
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/my_subscriptions
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=secretPassword12345
+      - SPRING_FLYWAY_URL=jdbc:postgresql://db:5432/my_subscriptions
+      - SPRING_FLYWAY_PASSWORD=secretPassword12345
+    depends_on:
+      - db
+    networks:
+      - my_subscriptions-network
+
+  db:
+    image: postgres:15
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=secretPassword12345
+      - POSTGRES_DB=my_subscriptions
+    volumes:
+      - my_subscriptions_data:/var/lib/postgresql/data
+    networks:
+      - my_subscriptions-network
+
+  dozzle:
+    image: amir20/dozzle:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - my_subscriptions-network
+
+networks:
+  my_subscriptions-network:
+    driver: bridge
+
+volumes:
+  my_subscriptions_data:
